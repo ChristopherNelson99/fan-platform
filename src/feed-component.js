@@ -92,7 +92,7 @@ function createFeedComponent(pageConfig) {
       this._bindEvents();
 
       try {
-        this._loadUserData();
+        await this._loadUserData();
         await this.loadFeed();
         await this._handleDeepLink();
       } catch (e) {
@@ -106,8 +106,8 @@ function createFeedComponent(pageConfig) {
      * Loads user + creator data from globals, localStorage, or API.
      * Priority: window globals > localStorage > fresh fetch.
      */
-    _loadUserData() {
-      // From site-wide AuthManager (preferred)
+    async _loadUserData() {
+      // Priority 1: From site-wide AuthManager globals (fastest)
       if (window.currentUser && window.creatorProfile) {
         this.user = {
           ...window.currentUser,
@@ -121,7 +121,7 @@ function createFeedComponent(pageConfig) {
         return;
       }
 
-      // From localStorage
+      // Priority 2: From localStorage (both must exist)
       const storedUser = localStorage.getItem('userData');
       const storedCreator = localStorage.getItem('creatorData');
 
@@ -134,6 +134,42 @@ function createFeedComponent(pageConfig) {
           avatar_url: formatAvatar(c.avatar_url),
           banner_url: c.banner_url || PLACEHOLDER,
         };
+        return;
+      }
+
+      // Priority 3: Fresh fetch from API (first load after login)
+      // This handles the case where verify page stored authToken +
+      // userData but NOT creatorData, and AuthManager hasn't finished.
+      try {
+        const [userRes, creatorRes] = await Promise.all([
+          API.auth.get('auth/get/me').json(),
+          API.public.get('get_creator_profile').json(),
+        ]);
+
+        const raw = userRes.user_information || userRes;
+        this.user = {
+          ...raw,
+          avatar_url: formatAvatar(raw.avatar_url),
+          subscribed: !!raw.subscribed,
+        };
+
+        if (creatorRes) {
+          this.creator = {
+            ...creatorRes,
+            avatar_url: formatAvatar(creatorRes.avatar_url),
+            banner_url: creatorRes.banner_url || PLACEHOLDER,
+          };
+          // Cache for next load so Priority 2 works
+          localStorage.setItem('creatorData', JSON.stringify(creatorRes));
+        }
+
+        // Also cache user data if not already stored
+        if (!storedUser) {
+          localStorage.setItem('userData', JSON.stringify(raw));
+        }
+      } catch (e) {
+        console.error('[Feed] Failed to fetch user data:', e);
+        throw e; // Let init() handle via _handleApiError
       }
     },
 
