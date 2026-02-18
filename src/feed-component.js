@@ -13,6 +13,7 @@ import {
   PLACEHOLDER,
   TRANSPARENT_PIXEL,
   FEED_CONFIG,
+  PROFILE_CONFIG,
   SETTINGS_CONFIG,
 } from './config.js';
 import {
@@ -32,8 +33,16 @@ let drawerPickerInstance = null;
 let lightboxPickerInstance = null;
 
 // ─── Component Registration ─────────────────────────────────
-export function registerFeedComponent() {
-  Alpine.data('app', () => ({
+
+/**
+ * Factory: creates the Alpine `app` data component with page-specific config.
+ * @param {object} pageConfig - FEED_CONFIG or PROFILE_CONFIG from config.js
+ */
+function createFeedComponent(pageConfig) {
+  return () => ({
+    // ── Page Config (used by loadFeed, deepLink, filters) ──
+    _pageConfig: pageConfig,
+
     // ── Reactive State ───────────────────────────────────
     user: {
       id: null,
@@ -137,12 +146,12 @@ export function registerFeedComponent() {
       if (!this.hasMore) return;
 
       const ep = this.user.subscribed
-        ? 'get_content_feed_premium'
-        : 'get_content_feed_unsubbed';
+        ? this._pageConfig.endpoints.premium
+        : this._pageConfig.endpoints.unsubbed;
 
       try {
         const res = await API.feed
-          .get(ep, { searchParams: { page: this.page, per_page: FEED_CONFIG.perPage } })
+          .get(ep, { searchParams: { page: this.page, per_page: this._pageConfig.perPage } })
           .json();
 
         if (res.length > 0) {
@@ -177,8 +186,8 @@ export function registerFeedComponent() {
       if (!post) {
         try {
           const ep = this.user.subscribed
-            ? 'get_content_feed_premium'
-            : 'get_content_feed_unsubbed';
+            ? this._pageConfig.endpoints.premium
+            : this._pageConfig.endpoints.unsubbed;
           const response = await API.feed
             .get(ep, { searchParams: { page: 1, per_page: 50 } })
             .json();
@@ -680,14 +689,22 @@ export function registerFeedComponent() {
         this.logout();
       });
 
-      // Feed filters
-      ['all', 'free', 'paid'].forEach((type) => {
+      // Feed/Profile filters (driven by _pageConfig.filters)
+      // Toggle mode: clicking active filter resets to 'all'
+      // This works for both feed (all/free/paid) and profile (liked/bookmarked)
+      this._pageConfig.filters.forEach((type) => {
         const btn = document.querySelector(`[data-element="filter-${type}"]`);
         if (btn) {
           btn.addEventListener('click', () => {
-            this.currentFilter = type;
-            document.querySelectorAll('.filter_button').forEach((b) => b.classList.remove('is-active'));
-            btn.classList.add('is-active');
+            if (this.currentFilter === type && type !== 'all') {
+              // Toggle off → back to 'all'
+              this.currentFilter = 'all';
+              btn.classList.remove('is-active');
+            } else {
+              this.currentFilter = type;
+              document.querySelectorAll('.filter_button').forEach((b) => b.classList.remove('is-active'));
+              btn.classList.add('is-active');
+            }
           });
         }
       });
@@ -698,5 +715,17 @@ export function registerFeedComponent() {
         if (btn) this.handleStripeCheckout(btn.dataset.price, btn.dataset.mode);
       });
     },
-  }));
+  });
+}
+
+// ─── Page-Specific Registration ──────────────────────────────
+
+/** Registers the Alpine `app` component for the FEED page. */
+export function registerFeedComponent() {
+  Alpine.data('app', createFeedComponent(FEED_CONFIG));
+}
+
+/** Registers the Alpine `app` component for the PROFILE page. */
+export function registerProfileComponent() {
+  Alpine.data('app', createFeedComponent(PROFILE_CONFIG));
 }

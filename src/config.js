@@ -77,6 +77,23 @@ export const FEED_CONFIG = {
   perPage: 10,
   commentMaxLength: 150,
   commentWarnAt: 130,
+  endpoints: {
+    premium:  'get_content_feed_premium',
+    unsubbed: 'get_content_feed_unsubbed',
+  },
+  filters: ['all', 'free', 'paid'],
+};
+
+// ─── Profile Config ──────────────────────────────────────────
+export const PROFILE_CONFIG = {
+  perPage: 10,
+  commentMaxLength: 150,
+  commentWarnAt: 130,
+  endpoints: {
+    premium:  'get_profile_feed_premium',
+    unsubbed: 'get_profile_feed_unsubbed',
+  },
+  filters: ['all', 'liked', 'bookmarked'],
 };
 
 // ─── Admin / Content Manager Config ──────────────────────────
