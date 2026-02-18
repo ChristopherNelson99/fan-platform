@@ -82,9 +82,10 @@ export const FEED_CONFIG = {
 // ─── Admin / Content Manager Config ──────────────────────────
 export const ADMIN_CONFIG = {
   endpoints: {
-    create: `${API_PREFIXES.admin}/photo_content`,
-    edit:   `${API_PREFIXES.admin}/edit_photo_content`,
-    feed:   `${API_PREFIXES.feed}/get_content_feed_premium`,
+    create:  `${API_PREFIXES.admin}/photo_content`,
+    edit:    `${API_PREFIXES.admin}/edit_photo_content`,
+    editBio: `${API_PREFIXES.admin}/creator_profile/edit_bio`,
+    feed:    `${API_PREFIXES.feed}/get_content_feed_premium`,
   },
   teaserBlur:    60,        // CSS blur() pixels for teaser generation
   teaserQuality: 0.8,       // JPEG quality for teaser blob

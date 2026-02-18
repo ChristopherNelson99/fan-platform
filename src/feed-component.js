@@ -13,6 +13,7 @@ import {
   PLACEHOLDER,
   TRANSPARENT_PIXEL,
   FEED_CONFIG,
+  SETTINGS_CONFIG,
 } from './config.js';
 import {
   dayjs,
@@ -66,6 +67,13 @@ export function registerFeedComponent() {
     hasMore: true,
     showPicker: false,
     showLightboxPicker: false,
+
+    // ── Bio Editing (Creator Only) ────────────────────────
+    isEditingBio: false,
+    editBioText: '',
+    isBioSaving: false,
+    bioError: '',
+
     players: new Map(),
     observers: new Map(),
     _hlsInstances: new Map(),
@@ -281,6 +289,85 @@ export function registerFeedComponent() {
         p.muted = !p.muted;
         p.volume = p.muted ? 0 : 1;
         post.isMuted = p.muted;
+      }
+    },
+
+    // ── Creator Bio Editing ──────────────────────────────
+    /**
+     * Returns true if the current user is the content creator.
+     * Used in Webflow: x-show="isCreator"
+     */
+    get isCreator() {
+      return this.user.id === SETTINGS_CONFIG.creatorUserId;
+    },
+
+    /**
+     * Enters bio edit mode. Copies current caption into the
+     * edit field. Only callable by the creator.
+     */
+    startEditBio() {
+      if (!this.isCreator) return;
+      // Strip HTML tags for plain-text editing
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = this.creator.caption || '';
+      this.editBioText = tempDiv.textContent || '';
+      this.bioError = '';
+      this.isEditingBio = true;
+    },
+
+    /** Cancels bio edit and reverts to the current saved caption. */
+    cancelEditBio() {
+      this.isEditingBio = false;
+      this.editBioText = '';
+      this.bioError = '';
+    },
+
+    /**
+     * Saves the edited bio to Xano and updates the local state.
+     * Endpoint: POST /creator_profile/edit_bio  { bio: "..." }
+     */
+    async saveBio() {
+      if (!this.isCreator || this.isBioSaving) return;
+
+      const text = this.editBioText.trim();
+      if (!text) {
+        this.bioError = 'Bio cannot be empty.';
+        return;
+      }
+
+      this.isBioSaving = true;
+      this.bioError = '';
+
+      try {
+        await API.admin
+          .post('creator_profile/edit_bio', { json: { bio: text } })
+          .json();
+
+        // Update local + global state
+        this.creator.caption = text;
+        if (window.creatorProfile) {
+          window.creatorProfile.caption = text;
+        }
+        const stored = JSON.parse(localStorage.getItem('creatorData') || '{}');
+        stored.caption = text;
+        localStorage.setItem('creatorData', JSON.stringify(stored));
+
+        this.isEditingBio = false;
+        this.editBioText = '';
+      } catch (error) {
+        console.error('[Bio] Save failed:', error);
+        if (error.response) {
+          try {
+            const data = await error.response.json();
+            this.bioError = data.message || 'Failed to update bio.';
+          } catch {
+            this.bioError = 'Failed to update bio.';
+          }
+        } else {
+          this.bioError = 'Network error. Please try again.';
+        }
+      } finally {
+        this.isBioSaving = false;
       }
     },
 
