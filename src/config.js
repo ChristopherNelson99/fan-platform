@@ -77,3 +77,24 @@ export const FEED_CONFIG = {
   commentMaxLength: 150,
   commentWarnAt: 130,
 };
+
+// ─── Admin / Content Manager Config ──────────────────────────
+export const ADMIN_CONFIG = {
+  endpoints: {
+    create: `${API_PREFIXES.admin}/photo_content`,
+    edit:   `${API_PREFIXES.admin}/edit_photo_content`,
+    feed:   `${API_PREFIXES.feed}/get_content_feed_premium`,
+  },
+  teaserBlur:    60,        // CSS blur() pixels for teaser generation
+  teaserQuality: 0.8,       // JPEG quality for teaser blob
+  maxTitleLength: 30,
+  selectors: {
+    editor:      '#rich-editor',
+    previewImg:  '#preview-img',
+    placeholder: '#upload-placeholder',
+    mediaInput:  '#media-input',
+    canvas:      '#teaser-canvas',
+    emojiTrigger:'#emoji-trigger',
+    emojiPicker: '#emoji-picker-container',
+  },
+};
