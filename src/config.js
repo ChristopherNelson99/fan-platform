@@ -15,6 +15,7 @@ export const API_PREFIXES = {
   public:   `${XANO_BASE}/api:R_M-MhbI`,
   checkout: `${XANO_BASE}/api:GFtJFKgV`,
   avatar:   `${XANO_BASE}/api:vbehYAzI`,
+  profile:  `${XANO_BASE}/api:vbehYAzI`,  // Same group as avatar
   admin:    `${XANO_BASE}/api:8M6P_cld`,
 };
 
@@ -97,4 +98,14 @@ export const ADMIN_CONFIG = {
     emojiTrigger:'#emoji-trigger',
     emojiPicker: '#emoji-picker-container',
   },
+};
+
+// ─── Settings Page Config ────────────────────────────────────
+export const SETTINGS_CONFIG = {
+  /** Timeout for Stripe portal + profile edit requests (ms) */
+  requestTimeout: 10000,
+  /** How long to show success feedback (ms) */
+  successFeedbackDuration: 3000,
+  /** Admin/creator user ID — hides portal button for the creator */
+  creatorUserId: 3,
 };

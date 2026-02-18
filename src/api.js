@@ -50,6 +50,11 @@ export const API = {
     prefixUrl: API_PREFIXES.admin,
     hooks: { beforeRequest: [addAuth] },
   }),
+
+  profile: ky.create({
+    prefixUrl: API_PREFIXES.profile,
+    hooks: { beforeRequest: [addAuth] },
+  }),
 };
 
 // ─── Standalone authenticated fetch (for notification system, etc.) ──
