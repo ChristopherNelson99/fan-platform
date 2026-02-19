@@ -105,10 +105,23 @@ export function registerSignupPasswordForm() {
           JSON.stringify(userData),
         );
 
-        // 5. Cross-tab login event
+        // 5. Fetch + cache creator profile so feed page loads instantly
+        try {
+          const creatorData = await API.public
+            .get('get_creator_profile')
+            .json();
+          localStorage.setItem(
+            AUTH_CONFIG.storage.creatorData,
+            JSON.stringify(creatorData),
+          );
+        } catch {
+          // Non-fatal — feed page tier 3 will retry
+        }
+
+        // 6. Cross-tab login event
         localStorage.setItem('login_event', Date.now());
 
-        // 6. Redirect to feed
+        // 7. Redirect to feed
         this.status = 'success';
         window.location.href = AUTH_CONFIG.routes.feed;
       } catch (error) {

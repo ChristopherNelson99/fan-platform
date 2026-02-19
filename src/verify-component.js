@@ -71,6 +71,19 @@ export function registerVerifyHandler() {
           JSON.stringify(response.user_information),
         );
 
+        // Fetch + cache creator profile so feed page loads instantly
+        try {
+          const creatorData = await API.public
+            .get('get_creator_profile')
+            .json();
+          localStorage.setItem(
+            AUTH_CONFIG.storage.creatorData,
+            JSON.stringify(creatorData),
+          );
+        } catch {
+          // Non-fatal — feed page tier 3 will retry
+        }
+
         // Cross-tab login event
         localStorage.setItem('login_event', Date.now());
 
